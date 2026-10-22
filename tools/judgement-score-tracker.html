@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Judgement Score Ledger</title>
+<meta name="description" content="Score tracker for the card game Judgement — players, starting cards, calls and results, with the Flowers, Hearts, Diamonds, Spades, No Trump rotation.">
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    --bg:#f2e8d5;
+    --surface:#fffaf0;
+    --surface-2:#ece0c7;
+    --ink:#26201a;
+    --ink-muted:#6f6252;
+    --border:rgba(38,32,26,0.14);
+    --felt:#1f5c46;
+    --felt-strong:#123d2f;
+    --felt-ink:#f7f2e4;
+    --gold:#a3792f;
+    --gold-soft:rgba(163,121,47,0.14);
+    --hearts:#a6402c;
+    --diamonds:#c1622f;
+    --spades:#26201a;
+    --flowers:#6f7d3c;
+    --none-badge:#7a5a1e;
+    --warn:#b3432c;
+    --shadow:0 1px 2px rgba(38,32,26,0.07), 0 10px 26px rgba(38,32,26,0.10);
+    --radius:14px;
+    --font-display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0e2b22;
+      --surface:#153629;
+      --surface-2:#1c4433;
+      --ink:#f1e8d6;
+      --ink-muted:#b9ab8d;
+      --border:rgba(241,232,214,0.14);
+      --felt:#4a9b78;
+      --felt-strong:#6fc39d;
+      --felt-ink:#0e2b22;
+      --gold:#dcb666;
+      --gold-soft:rgba(220,182,102,0.16);
+      --hearts:#e2836a;
+      --diamonds:#eaa06a;
+      --spades:#f1e8d6;
+      --flowers:#b6c17a;
+      --none-badge:#dcb666;
+      --warn:#e2836a;
+      --shadow:0 1px 2px rgba(0,0,0,0.35), 0 14px 32px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e2b22; --surface:#153629; --surface-2:#1c4433; --ink:#f1e8d6; --ink-muted:#b9ab8d;
+    --border:rgba(241,232,214,0.14); --felt:#4a9b78; --felt-strong:#6fc39d; --felt-ink:#0e2b22;
+    --gold:#dcb666; --gold-soft:rgba(220,182,102,0.16); --hearts:#e2836a; --diamonds:#eaa06a;
+    --spades:#f1e8d6; --flowers:#b6c17a; --none-badge:#dcb666; --warn:#e2836a;
+    --shadow:0 1px 2px rgba(0,0,0,0.35), 0 14px 32px rgba(0,0,0,0.4);
+  }
+  :root[data-theme="light"]{
+    --bg:#f2e8d5; --surface:#fffaf0; --surface-2:#ece0c7; --ink:#26201a; --ink-muted:#6f6252;
+    --border:rgba(38,32,26,0.14); --felt:#1f5c46; --felt-strong:#123d2f; --felt-ink:#f7f2e4;
+    --gold:#a3792f; --gold-soft:rgba(163,121,47,0.14); --hearts:#a6402c; --diamonds:#c1622f;
+    --spades:#26201a; --flowers:#6f7d3c; --none-badge:#7a5a1e; --warn:#b3432c;
+    --shadow:0 1px 2px rgba(38,32,26,0.07), 0 10px 26px rgba(38,32,26,0.10);
+  }
+
+  *{box-sizing:border-box;}
+  body{background:var(--bg);}
+  .app-shell{
+    max-width:760px;
+    margin:0 auto;
+    padding:1.5rem 1rem 4rem;
+    font-family:var(--font-body);
+    color:var(--ink);
+  }
+  @media (min-width:640px){ .app-shell{ padding:2.5rem 1.5rem 5rem; } }
+
+  button, input{ font-family:inherit; color:inherit; }
+  button{ cursor:pointer; }
+  input:focus-visible, button:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--gold);
+    outline-offset:2px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+
+  /* ---------- Suit colors (trump badges, history) ---------- */
+  .suit-flowers{ color:var(--flowers); }
+  .suit-hearts{ color:var(--hearts); }
+  .suit-diamonds{ color:var(--diamonds); }
+  .suit-spades{ color:var(--spades); }
+  .suit-none{ color:var(--none-badge); font-size:.65rem; letter-spacing:.02em; }
+
+  /* ---------- Generic card / buttons ---------- */
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:1.25rem;
+  }
+  .card + .card{ margin-top:1rem; }
+  h2.section-title{
+    font-family:var(--font-display); font-size:1.3rem; font-weight:600; margin:0 0 .25rem;
+  }
+  .hint{ color:var(--ink-muted); font-size:.85rem; line-height:1.5; margin:0 0 1rem; }
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:.4rem;
+    border-radius:10px; border:1px solid var(--border); background:var(--surface-2);
+    color:var(--ink); font-size:.9rem; font-weight:600; padding:.65rem 1.1rem;
+    transition:transform .12s ease, background .15s ease;
+  }
+  .btn:active{ transform:scale(0.97); }
+  .btn-primary{
+    background:var(--felt); border-color:var(--felt); color:var(--felt-ink); width:100%;
+    padding:.85rem 1.1rem; font-size:1rem;
+  }
+  .btn-ghost{ background:transparent; }
+  .btn-warn{ background:transparent; border-color:var(--warn); color:var(--warn); }
+  .btn-sm{ padding:.4rem .75rem; font-size:.8rem; }
+  .btn-icon{
+    width:2.1rem; height:2.1rem; border-radius:50%; padding:0; font-size:1.1rem; line-height:1;
+    background:var(--surface-2); flex:none;
+  }
+  .toolbar{ display:flex; gap:.5rem .75rem; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-bottom:.75rem; }
+  .toolbar-actions{ display:flex; gap:.5rem; flex-wrap:wrap; margin-left:auto; }
+
+  /* ---------- Setup form ---------- */
+  .field{ margin-bottom:1.1rem; }
+  .field label{ display:block; font-size:.78rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.08em; color:var(--ink-muted); margin-bottom:.4rem; }
+
+  .player-tags{ display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.75rem; }
+  .player-tag{
+    display:inline-flex; align-items:center; gap:.3rem; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:999px; padding:.35rem .35rem .35rem .85rem;
+    font-weight:600; font-size:.9rem;
+  }
+  .tag-remove{
+    width:1.5rem; height:1.5rem; border-radius:50%; border:none; background:transparent;
+    color:var(--ink-muted); font-size:1.1rem; line-height:1; display:flex; align-items:center;
+    justify-content:center; padding:0;
+  }
+  .tag-remove:hover{ background:var(--warn); color:var(--surface); }
+
+  .add-player-row{ display:flex; gap:.5rem; }
+  .add-player-row input[type=text]{
+    flex:1; padding:.6rem .7rem; border-radius:10px; border:1px solid var(--border);
+    background:var(--surface); color:var(--ink); font-size:.95rem;
+  }
+
+  .add-player-inline{ display:flex; gap:.4rem; align-items:center; }
+  .add-player-inline input[type=text]{
+    width:8.5rem; padding:.5rem .65rem; border-radius:10px; border:1px solid var(--border);
+    background:var(--surface); color:var(--ink); font-size:.85rem;
+  }
+
+  .startcards-row{ display:flex; align-items:center; gap:.75rem; }
+  .startcards-row input[type=number]{
+    width:4.5rem; text-align:center; padding:.55rem; border-radius:10px; border:1px solid var(--border);
+    background:var(--surface); color:var(--ink); font-family:var(--font-mono); font-size:1rem;
+    font-variant-numeric:tabular-nums;
+  }
+  details.scoring{ margin-top:.25rem; }
+  details.scoring summary{
+    cursor:pointer; font-size:.82rem; font-weight:700; color:var(--gold);
+    letter-spacing:.04em; list-style:none; display:flex; align-items:center; gap:.35rem;
+  }
+  details.scoring summary::-webkit-details-marker{ display:none; }
+  details.scoring summary::before{ content:"⚙"; }
+  .scoring-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:.75rem; margin-top:.75rem; }
+  .scoring-grid .field{ margin-bottom:0; }
+  .scoring-grid input{
+    width:100%; padding:.55rem; border-radius:10px; border:1px solid var(--border);
+    background:var(--surface); color:var(--ink); font-family:var(--font-mono); text-align:center;
+  }
+  .error-msg{ color:var(--warn); font-size:.85rem; margin:.5rem 0 0; }
+
+  /* ---------- Leaderboard ---------- */
+  .leaderboard{
+    position:sticky; top:0; z-index:5; display:flex; gap:.55rem; overflow-x:auto;
+    padding:.85rem .1rem; margin:0 -0.1rem 1rem; background:var(--bg);
+    scrollbar-width:thin;
+  }
+  .chip{
+    flex:none; min-width:100px; background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:.55rem .75rem; box-shadow:var(--shadow);
+  }
+  .chip.lead{ border-color:var(--gold); background:var(--gold-soft); }
+  .chip .chip-rank{ font-size:.68rem; color:var(--ink-muted); font-weight:700; letter-spacing:.05em; }
+  .chip .chip-name{ font-weight:700; font-size:.9rem; margin:.1rem 0 .2rem; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis; max-width:140px; }
+  .chip .chip-score{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:1.15rem; font-weight:700; }
+  .chip.lead .chip-score{ color:var(--gold); }
+
+  /* ---------- Round entry ---------- */
+  .round-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:.75rem; margin-bottom:.9rem; }
+  .round-head .round-title{ font-family:var(--font-display); font-size:1.25rem; font-weight:600; margin:0; }
+  .round-head .round-meta{ color:var(--ink-muted); font-size:.85rem; margin-top:.15rem; }
+  .trump-badge{
+    display:flex; align-items:center; gap:.4rem; padding:.4rem .75rem; border-radius:999px;
+    background:var(--surface-2); border:1px solid var(--border); flex:none; font-weight:700; font-size:.9rem;
+  }
+  .trump-badge .glyph{ font-size:1.05rem; }
+
+  .entry-row{ padding:.75rem 0; border-bottom:1px solid var(--border); }
+  .entry-row:last-of-type{ border-bottom:none; }
+  .entry-name{ font-weight:700; margin-bottom:.5rem; }
+  .entry-controls{ display:flex; gap:1.5rem; flex-wrap:wrap; }
+  .entry-field{ display:flex; flex-direction:column; gap:.3rem; }
+  .entry-field .field-label{ font-size:.68rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.08em; color:var(--ink-muted); }
+  .stepper{ display:flex; align-items:center; gap:.5rem; }
+  .stepper input{
+    width:2.6rem; text-align:center; border:1px solid var(--border); border-radius:8px;
+    background:var(--surface); color:var(--ink); padding:.35rem 0; font-family:var(--font-mono);
+    font-size:1rem; font-variant-numeric:tabular-nums;
+  }
+
+  .btn-loss{
+    min-width:6.5rem; border-color:var(--border); background:var(--surface-2); color:var(--ink-muted);
+    font-weight:700;
+  }
+  .btn-loss.active{
+    background:var(--warn); border-color:var(--warn); color:var(--surface);
+  }
+
+  .round-actions{ display:flex; gap:.6rem; margin-top:1rem; }
+  .round-actions .btn-primary{ flex:1; }
+  .round-actions .btn-primary:disabled{ opacity:.5; cursor:not-allowed; }
+
+  .rule-note{ font-size:.78rem; color:var(--ink-muted); margin-top:.6rem; }
+
+  /* ---------- History ---------- */
+  .history-title{ display:flex; align-items:center; justify-content:space-between; margin:1.5rem 0 .6rem; }
+  .history-title h2{ margin:0; }
+  .table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--surface); box-shadow:var(--shadow); }
+  table.ledger{ border-collapse:collapse; width:100%; font-size:.85rem; }
+  table.ledger th, table.ledger td{ padding:.6rem .7rem; text-align:left; white-space:nowrap; }
+  table.ledger thead th{
+    font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted);
+    border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface);
+  }
+  table.ledger tbody tr{ border-bottom:1px solid var(--border); cursor:pointer; }
+  table.ledger tbody tr:last-child{ border-bottom:none; }
+  table.ledger tbody tr:hover{ background:var(--surface-2); }
+  table.ledger td:first-child, table.ledger th:first-child{
+    position:sticky; left:0; background:var(--surface); border-right:1px solid var(--border);
+  }
+  table.ledger tbody tr:hover td:first-child{ background:var(--surface-2); }
+  .cell-score{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+  .cell-score .bw{ display:block; color:var(--ink-muted); font-size:.72rem; }
+  .cell-score .pts{ font-weight:700; }
+  .empty-history{ padding:1.25rem; color:var(--ink-muted); font-size:.85rem; text-align:center; }
+
+  /* ---------- Finished screen ---------- */
+  .final-standings{ list-style:none; margin:1rem 0 0; padding:0; }
+  .final-standings li{
+    display:flex; align-items:center; justify-content:space-between; padding:.75rem .25rem;
+    border-bottom:1px solid var(--border);
+  }
+  .final-standings li:last-child{ border-bottom:none; }
+  .final-standings .who{ display:flex; align-items:center; gap:.6rem; font-weight:700; }
+  .final-standings .rank{ font-family:var(--font-mono); color:var(--ink-muted); width:1.5rem; }
+  .final-standings .pts{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:1.1rem; font-weight:700; }
+  .final-standings li.win .pts{ color:var(--gold); }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <main id="app"></main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "judgement-tracker-state-v3";
+  var TRUMPS = ["flowers","hearts","diamonds","spades","none"];
+  var TRUMP_META = {
+    flowers:{ label:"Flowers", glyph:"❁", cls:"suit-flowers" },
+    hearts:{ label:"Hearts", glyph:"♥", cls:"suit-hearts" },
+    diamonds:{ label:"Diamonds", glyph:"♦", cls:"suit-diamonds" },
+    spades:{ label:"Spades", glyph:"♠", cls:"suit-spades" },
+    none:{ label:"No Trump", glyph:"NT", cls:"suit-none" }
+  };
+  var MAX_PLAYERS = 8;
+
+  function defaultState(){
+    return {
+      phase:"setup",
+      players:[],
+      nextId:1,
+      startCards:7,
+      scoring:{ base:10, perTrick:1, miss:0 },
+      rounds:[],
+      editingIndex:null,
+      draft:null
+    };
+  }
+
+  var state = loadState();
+
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return defaultState();
+      var parsed = JSON.parse(raw);
+      if(!parsed || !parsed.phase) return defaultState();
+      return parsed;
+    }catch(e){ return defaultState(); }
+  }
+
+  function saveState(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  function buildSchedule(startCards){
+    var seq = [];
+    for(var c = startCards; c >= 1; c--) seq.push(c);
+    return seq.map(function(cards, i){
+      return { cards: cards, trump: TRUMPS[i % TRUMPS.length] };
+    });
+  }
+
+  function schedule(){ return buildSchedule(state.startCards); }
+
+  function totals(){
+    var sums = {};
+    state.players.forEach(function(p){ sums[p.id] = 0; });
+    state.rounds.forEach(function(r){
+      Object.keys(r.entries).forEach(function(pid){
+        if(sums.hasOwnProperty(pid)) sums[pid] += r.entries[pid].score;
+      });
+    });
+    return sums;
+  }
+
+  function ranking(){
+    var sums = totals();
+    return state.players.map(function(p){ return { id:p.id, name:p.name, score:sums[p.id] || 0 }; })
+      .sort(function(a,b){ return b.score - a.score; });
+  }
+
+  var armedAction = null, armedTimer = null;
+  function requestConfirm(action, doIt){
+    if(armedAction === action){
+      clearTimeout(armedTimer); armedAction = null;
+      doIt();
+      return;
+    }
+    armedAction = action;
+    clearTimeout(armedTimer);
+    armedTimer = setTimeout(function(){ armedAction = null; render(); }, 2500);
+    render();
+  }
+
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];
+    });
+  }
+
+  function clampNum(n, min, max){ n = Math.round(Number(n) || 0); return Math.max(min, Math.min(max, n)); }
+
+  /* ---------------- SETUP ---------------- */
+
+  function renderSetup(){
+    var tagsHtml = state.players.map(function(p){
+      return (
+        '<span class="player-tag">' + esc(p.name) +
+          '<button class="tag-remove" data-action="remove-player" data-id="' + p.id + '" aria-label="Remove ' + esc(p.name) + '">&times;</button>' +
+        '</span>'
+      );
+    }).join("");
+
+    return (
+      '<div class="card">' +
+        '<div class="field">' +
+          '<label>Players</label>' +
+          (tagsHtml ? '<div class="player-tags">' + tagsHtml + '</div>' : '') +
+          (state.players.length < MAX_PLAYERS ?
+            '<div class="add-player-row">' +
+              '<input type="text" data-role="new-player-input" placeholder="Player name" maxlength="24" autocomplete="off">' +
+              '<button class="btn btn-icon" data-action="add-player" aria-label="Add player">+</button>' +
+            '</div>' :
+            '<p class="hint" style="margin:0;">Max ' + MAX_PLAYERS + ' players.</p>') +
+        '</div>' +
+
+        '<div class="field">' +
+          '<label>Starting cards per hand</label>' +
+          '<div class="startcards-row">' +
+            '<button class="btn btn-icon" data-action="dec-startcards" aria-label="Decrease">&minus;</button>' +
+            '<input type="number" id="startCardsInput" min="1" max="20" value="' + state.startCards + '">' +
+            '<button class="btn btn-icon" data-action="inc-startcards" aria-label="Increase">+</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<details class="scoring">' +
+          '<summary>Scoring rules</summary>' +
+          '<div class="scoring-grid">' +
+            '<div class="field"><label>Exact&nbsp;call bonus</label><input type="number" id="scoreBase" min="0" max="99" value="' + state.scoring.base + '"></div>' +
+            '<div class="field"><label>Points per trick</label><input type="number" id="scorePerTrick" min="0" max="9" value="' + state.scoring.perTrick + '"></div>' +
+            '<div class="field"><label>Missed&nbsp;call score</label><input type="number" id="scoreMiss" min="-50" max="50" value="' + state.scoring.miss + '"></div>' +
+          '</div>' +
+          '<p class="rule-note">Made the call &rarr; ' + state.scoring.base + ' + (call &times; ' + state.scoring.perTrick + '). Loss &rarr; ' + state.scoring.miss + ' points.</p>' +
+        '</details>' +
+
+        (state.setupError ? '<p class="error-msg">' + esc(state.setupError) + '</p>' : '') +
+
+        '<div style="margin-top:1.25rem;">' +
+          '<button class="btn btn-primary" data-action="start-game">Deal the first hand</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  /* ---------------- GAME ---------------- */
+
+  function currentRoundIndex(){
+    return state.editingIndex != null ? state.editingIndex : state.rounds.length;
+  }
+
+  function ensureDraft(){
+    var idx = currentRoundIndex();
+    var sched = schedule();
+    if(idx >= sched.length) return null;
+    if(!state.draft || state.draft.index !== idx){
+      state.draft = { index: idx, entries: {} };
+    }
+    var existing = state.rounds[idx];
+    state.players.forEach(function(p){
+      if(!state.draft.entries[p.id]){
+        var e = existing && existing.entries[p.id];
+        state.draft.entries[p.id] = { bid: e ? e.bid : 0, loss: e ? e.loss : false };
+      }
+    });
+    return state.draft;
+  }
+
+  function renderLeaderboard(){
+    var ranked = ranking();
+    var topScore = ranked.length ? ranked[0].score : 0;
+    return '<div class="leaderboard">' + ranked.map(function(r, pos){
+      var isLead = r.score === topScore && state.rounds.length > 0;
+      return (
+        '<div class="chip' + (isLead ? ' lead' : '') + '">' +
+          '<div class="chip-rank">' + (isLead ? '&#9819; ' : '#' + (pos+1) + ' ') + '</div>' +
+          '<div class="chip-name">' + esc(r.name) + '</div>' +
+          '<div class="chip-score">' + r.score + '</div>' +
+        '</div>'
+      );
+    }).join("") + '</div>';
+  }
+
+  function renderRoundCard(sched){
+    var idx = currentRoundIndex();
+    if(idx >= sched.length) return "";
+    var rd = sched[idx];
+    var meta = TRUMP_META[rd.trump];
+    var draft = ensureDraft();
+    var isEditing = state.editingIndex != null;
+
+    var rowsHtml = state.players.map(function(p){
+      var e = draft.entries[p.id] || { bid:0, loss:false };
+      return (
+        '<div class="entry-row">' +
+          '<div class="entry-name">' + esc(p.name) + '</div>' +
+          '<div class="entry-controls">' +
+            '<div class="entry-field">' +
+              '<span class="field-label">Call</span>' +
+              '<div class="stepper">' +
+                '<button class="btn btn-icon" data-action="dec-bid" data-id="' + p.id + '" aria-label="Decrease call">&minus;</button>' +
+                '<input type="number" inputmode="numeric" min="0" max="' + rd.cards + '" data-role="bid-input" data-id="' + p.id + '" value="' + e.bid + '">' +
+                '<button class="btn btn-icon" data-action="inc-bid" data-id="' + p.id + '" aria-label="Increase call">+</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="entry-field">' +
+              '<span class="field-label">Result</span>' +
+              '<button class="btn btn-loss ' + (e.loss ? "active" : "") + '" data-action="toggle-loss" data-id="' + p.id + '" aria-pressed="' + (e.loss ? "true" : "false") + '">Loss</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join("");
+
+    return (
+      '<div class="card">' +
+        '<div class="round-head">' +
+          '<div>' +
+            '<p class="round-title">' + (isEditing ? "Editing round " : "Round ") + (idx+1) + ' of ' + sched.length + '</p>' +
+            '<p class="round-meta">' + rd.cards + ' card' + (rd.cards === 1 ? "" : "s") + ' dealt</p>' +
+          '</div>' +
+          '<div class="trump-badge ' + meta.cls + '"><span class="glyph">' + meta.glyph + '</span>' + meta.label + '</div>' +
+        '</div>' +
+
+        rowsHtml +
+
+        '<div class="round-actions">' +
+          (isEditing ? '<button class="btn" data-action="cancel-edit">Cancel</button>' : '') +
+          '<button class="btn btn-primary" data-action="' + (isEditing ? "save-edit" : "confirm-round") + '">' +
+            (isEditing ? "Save changes" : "Confirm round") +
+          '</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function computeScore(bid, loss){
+    if(loss) return state.scoring.miss;
+    return state.scoring.base + bid * state.scoring.perTrick;
+  }
+
+  function renderHistory(sched){
+    if(state.rounds.length === 0){
+      return (
+        '<div class="history-title"><h2 class="section-title">Score history</h2></div>' +
+        '<div class="table-wrap"><div class="empty-history">Confirmed rounds will show up here.</div></div>'
+      );
+    }
+    var head = '<tr><th>Round</th>' + state.players.map(function(p){
+      return '<th>' + esc(p.name) + '</th>';
+    }).join("") + '</tr>';
+
+    var body = state.rounds.map(function(r, ridx){
+      var meta = TRUMP_META[r.trump];
+      var cells = state.players.map(function(p){
+        var e = r.entries[p.id];
+        if(!e) return '<td class="cell-score">&mdash;</td>';
+        return '<td class="cell-score"><span class="bw">call ' + e.bid + ', ' + (e.loss ? "loss" : "made") + '</span><span class="pts">' + e.score + '</span></td>';
+      }).join("");
+      return (
+        '<tr data-action="edit-round" data-index="' + ridx + '">' +
+          '<td><span class="' + meta.cls + '">' + meta.glyph + '</span>&nbsp;' + (ridx+1) + ' &middot; ' + r.cards + 'c</td>' +
+          cells +
+        '</tr>'
+      );
+    }).join("");
+
+    return (
+      '<div class="history-title"><h2 class="section-title">Score history</h2><span class="hint" style="margin:0;">tap a round to edit</span></div>' +
+      '<div class="table-wrap"><table class="ledger"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>'
+    );
+  }
+
+  function renderFinished(){
+    var ranked = ranking();
+    var topScore = ranked.length ? ranked[0].score : 0;
+    return (
+      '<div class="card">' +
+        '<h2 class="section-title">&#9819; Final standings</h2>' +
+        '<ul class="final-standings">' +
+          ranked.map(function(r, pos){
+            return (
+              '<li class="' + (r.score === topScore ? "win" : "") + '">' +
+                '<span class="who"><span class="rank">#' + (pos+1) + '</span>' + esc(r.name) + '</span>' +
+                '<span class="pts">' + r.score + '</span>' +
+              '</li>'
+            );
+          }).join("") +
+        '</ul>' +
+        '<div style="margin-top:1.25rem;">' +
+          '<button class="btn btn-primary" data-action="new-game">' + (armedAction === "new-game" ? "Tap again to confirm" : "Start a new game") + '</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function render(){
+    var app = document.getElementById("app");
+    if(state.phase === "setup"){
+      app.innerHTML = renderSetup();
+      return;
+    }
+
+    var sched = schedule();
+    var finished = state.rounds.length >= sched.length && state.editingIndex == null;
+    var html = "";
+
+    html += renderLeaderboard();
+
+    html += '<div class="toolbar">';
+    if(!finished && state.players.length < MAX_PLAYERS){
+      html += '<div class="add-player-inline">' +
+        '<input type="text" data-role="new-player-input" placeholder="Add player" maxlength="24" autocomplete="off">' +
+        '<button class="btn btn-icon" data-action="add-player" aria-label="Add player">+</button>' +
+      '</div>';
+    }
+    html += '<div class="toolbar-actions">';
+    if(state.rounds.length > 0 && state.editingIndex == null){
+      html += '<button class="btn btn-sm btn-warn" data-action="undo-round">' + (armedAction === "undo-round" ? "Tap again to confirm" : "Undo last round") + '</button>';
+    }
+    html += '<button class="btn btn-sm btn-warn" data-action="new-game">' + (armedAction === "new-game" ? "Tap again to confirm" : "New game") + '</button>';
+    html += '</div>';
+    html += '</div>';
+
+    if(finished){
+      html += renderFinished();
+    }else{
+      html += renderRoundCard(sched);
+    }
+
+    html += renderHistory(sched);
+
+    app.innerHTML = html;
+  }
+
+  /* ---------------- Actions ---------------- */
+
+  function addPlayer(){
+    var input = document.querySelector('[data-role="new-player-input"]');
+    if(!input) return;
+    var name = (input.value || "").trim();
+    if(!name || state.players.length >= MAX_PLAYERS) return;
+    state.players.push({ id: "p" + (state.nextId++), name: name });
+    state.setupError = null;
+    saveState(); render();
+    var again = document.querySelector('[data-role="new-player-input"]');
+    if(again) again.focus();
+  }
+  function removePlayer(id){
+    state.players = state.players.filter(function(p){ return p.id !== id; });
+    saveState(); render();
+  }
+
+  function startGame(){
+    if(state.players.length < 2){ state.setupError = "Add at least two players."; render(); return; }
+    if(!state.startCards || state.startCards < 1){ state.setupError = "Starting cards must be at least 1."; render(); return; }
+    state.setupError = null;
+    state.phase = "playing";
+    state.rounds = [];
+    state.editingIndex = null;
+    state.draft = null;
+    saveState(); render();
+  }
+
+  function confirmRound(){
+    var sched = schedule();
+    var idx = currentRoundIndex();
+    if(idx >= sched.length) return;
+    var rd = sched[idx];
+    var draft = ensureDraft();
+    var entries = {};
+    state.players.forEach(function(p){
+      var e = draft.entries[p.id] || { bid:0, loss:false };
+      entries[p.id] = { bid: e.bid, loss: e.loss, score: computeScore(e.bid, e.loss) };
+    });
+    state.rounds[idx] = { cards: rd.cards, trump: rd.trump, entries: entries };
+    state.draft = null;
+    saveState(); render();
+  }
+
+  function saveEdit(){
+    confirmRound();
+    state.editingIndex = null;
+    state.draft = null;
+    saveState(); render();
+  }
+
+  function cancelEdit(){
+    state.editingIndex = null;
+    state.draft = null;
+    render();
+  }
+
+  function editRound(idx){
+    state.editingIndex = idx;
+    state.draft = null;
+    render();
+    var appEl = document.getElementById("app");
+    if(appEl) appEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function undoRound(){
+    requestConfirm("undo-round", function(){
+      state.rounds.pop();
+      state.editingIndex = null;
+      state.draft = null;
+      saveState(); render();
+    });
+  }
+
+  function newGame(){
+    requestConfirm("new-game", function(){
+      state = defaultState();
+      saveState(); render();
+    });
+  }
+
+  /* ---------------- Event wiring ---------------- */
+
+  document.addEventListener("DOMContentLoaded", function(){
+    var app = document.getElementById("app");
+
+    app.addEventListener("click", function(e){
+      var t = e.target.closest("[data-action]");
+      if(!t) return;
+      var action = t.getAttribute("data-action");
+      var pid = t.getAttribute("data-id");
+      var index = t.getAttribute("data-index");
+
+      if(action !== "undo-round" && action !== "new-game" && armedAction){
+        armedAction = null; clearTimeout(armedTimer);
+      }
+
+      switch(action){
+        case "add-player": addPlayer(); break;
+        case "remove-player": removePlayer(pid); break;
+        case "inc-startcards":
+          state.startCards = clampNum(state.startCards + 1, 1, 20); saveState(); render(); break;
+        case "dec-startcards":
+          state.startCards = clampNum(state.startCards - 1, 1, 20); saveState(); render(); break;
+        case "start-game": startGame(); break;
+        case "inc-bid": case "dec-bid": {
+          var sched = schedule(); var rd = sched[currentRoundIndex()];
+          var draft = ensureDraft(); if(!draft || !rd) break;
+          var entry = draft.entries[pid]; if(!entry) break;
+          if(action === "inc-bid") entry.bid = clampNum(entry.bid + 1, 0, rd.cards);
+          if(action === "dec-bid") entry.bid = clampNum(entry.bid - 1, 0, rd.cards);
+          render();
+          break;
+        }
+        case "toggle-loss": {
+          var draftL = ensureDraft(); if(!draftL) break;
+          var entryL = draftL.entries[pid]; if(!entryL) break;
+          entryL.loss = !entryL.loss;
+          render();
+          break;
+        }
+        case "confirm-round": confirmRound(); break;
+        case "save-edit": saveEdit(); break;
+        case "cancel-edit": cancelEdit(); break;
+        case "edit-round": editRound(Number(index)); break;
+        case "undo-round": undoRound(); break;
+        case "new-game": newGame(); break;
+      }
+    });
+
+    app.addEventListener("input", function(e){
+      var t = e.target;
+      if(t.id === "startCardsInput"){
+        var v = clampNum(t.value, 1, 20);
+        state.startCards = v; saveState();
+        return;
+      }
+      if(t.id === "scoreBase"){ state.scoring.base = clampNum(t.value, 0, 99); saveState(); return; }
+      if(t.id === "scorePerTrick"){ state.scoring.perTrick = clampNum(t.value, 0, 9); saveState(); return; }
+      if(t.id === "scoreMiss"){ state.scoring.miss = clampNum(t.value, -50, 50); saveState(); return; }
+      if(t.matches('[data-role="bid-input"]')){
+        var sched = schedule(); var rd = sched[currentRoundIndex()]; var draft = ensureDraft();
+        var entry = draft && draft.entries[t.getAttribute("data-id")];
+        if(rd && entry){ entry.bid = clampNum(t.value, 0, rd.cards); }
+        return;
+      }
+    });
+
+    app.addEventListener("keydown", function(e){
+      if(e.key === "Enter" && e.target.matches('[data-role="new-player-input"]')){
+        e.preventDefault();
+        addPlayer();
+      }
+    });
+
+    app.addEventListener("change", function(e){
+      var t = e.target;
+      if(t.id === "startCardsInput"){ render(); }
+    });
+
+    render();
+  });
+})();
+</script>
+</body>
+</html>

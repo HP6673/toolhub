@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All Apps by MrPress</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg:#f7f6f2; --ink:#111; --muted:#888; --card-bg:#ffffff; --border:#e5e3dc; --tag-bg:#efefeb; }
+    body { background:var(--bg); color:var(--ink); font-family:'DM Sans',sans-serif; font-weight:300; min-height:100vh; }
+    header { display:flex; align-items:center; justify-content:space-between; padding:2rem 4rem; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--bg); z-index:10; }
+    .logo { font-family:'DM Serif Display',serif; font-size:1.4rem; letter-spacing:-.02em; text-decoration:none; color:var(--ink); }
+    .logo span { color:var(--muted); font-weight:300; }
+    .header-right { display:flex; align-items:center; gap:.75rem; }
+    .contact-btn { background:transparent; border:1px solid var(--border); border-radius:99px; padding:.45rem 1.1rem; font-family:'DM Sans',sans-serif; font-size:.82rem; color:var(--muted); text-decoration:none; transition:all .2s; white-space:nowrap; }
+    .contact-btn:hover { background:var(--ink); color:#fff; border-color:var(--ink); }
+    #search { background:transparent; border:1px solid var(--border); border-radius:99px; padding:.5rem 1.2rem; font-family:'DM Sans',sans-serif; font-size:.85rem; color:var(--ink); width:220px; outline:none; transition:border-color .2s; }
+    #search::placeholder { color:var(--muted); }
+    #search:focus { border-color:var(--ink); }
+    .hero { padding:5rem 4rem 3rem; max-width:100%; text-align:center; display:flex; flex-direction:column; align-items:center; }
+    .hero-eyebrow { font-size:.75rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:1rem; }
+    .hero h1 { font-family:'DM Serif Display',serif; font-size:clamp(2.8rem,5vw,4.5rem); line-height:1.05; letter-spacing:-.03em; margin-bottom:1.2rem; }
+    .hero p { font-size:1.05rem; color:var(--muted); line-height:1.7; }
+    .filter-bar { padding:0 4rem; margin-bottom:2.5rem; display:flex; gap:.5rem; flex-wrap:wrap; }
+    .filter-btn { background:transparent; border:1px solid var(--border); border-radius:99px; padding:.4rem 1rem; font-family:'DM Sans',sans-serif; font-size:.82rem; color:var(--muted); cursor:pointer; transition:all .2s; }
+    .filter-btn:hover, .filter-btn.active { background:var(--ink); color:#fff; border-color:var(--ink); }
+    .section-label { padding:0 4rem; margin-bottom:1.5rem; font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1px; border-top:1px solid var(--border); border-left:1px solid var(--border); margin:0 4rem 2rem; }
+    .tool-card { background:var(--card-bg); border-right:1px solid var(--border); border-bottom:1px solid var(--border); padding:2rem; text-decoration:none; color:inherit; display:flex; flex-direction:column; gap:.8rem; transition:background .2s; position:relative; overflow:hidden; animation:fadeUp .4s ease both; }
+    .tool-card::after { content:'→'; position:absolute; bottom:1.8rem; right:2rem; font-size:1rem; color:var(--border); transition:all .2s; }
+    .tool-card:hover { background:var(--ink); color:#fff; }
+    .tool-card:hover::after { color:#fff; right:1.5rem; }
+    .tool-card:hover .tool-tag { background:rgba(255,255,255,.15); color:#fff; }
+    .tool-card:hover .tool-desc { color:rgba(255,255,255,.65); }
+    .tool-icon { font-size:1.6rem; line-height:1; }
+    .tool-name { font-family:'DM Serif Display',serif; font-size:1.25rem; letter-spacing:-.01em; }
+    .tool-desc { font-size:.88rem; color:var(--muted); line-height:1.6; flex:1; }
+    .tool-tag { display:inline-block; background:var(--tag-bg); border-radius:99px; padding:.25rem .75rem; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); align-self:flex-start; transition:all .2s; }
+    .empty { grid-column:1/-1; padding:4rem 2rem; text-align:center; color:var(--muted); font-size:.95rem; }
+    footer { border-top:1px solid var(--border); padding:2rem 4rem; display:flex; justify-content:space-between; align-items:center; font-size:.8rem; color:var(--muted); flex-wrap:wrap; gap:.5rem; }
+    .footer-copy { font-size:.78rem; color:var(--muted); }
+    @media(max-width:700px) { header,.hero,.filter-bar,.section-label,.grid,footer{padding-left:1.5rem;padding-right:1.5rem} .hero{padding-top:3rem} .hero h1{font-size:2.5rem} .grid{margin-left:1.5rem;margin-right:1.5rem} #search{width:160px} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="logo" href="index.html">All Apps <span>by MrPress</span></a>
+    <div class="header-right">
+      <a class="contact-btn" href="https://forms.gle/r1U3WtTiGjrTYTXs8" target="_blank" rel="noopener">Contact</a>
+      <input id="search" type="text" placeholder="Search tools…" />
+    </div>
+  </header>
+
+  <section class="hero">
+    <p class="hero-eyebrow">One stop shop</p>
+    <h1>Every tool you need.</h1>
+    <p>A growing collection of free, fast, browser-based tools — no installs, no accounts, no nonsense.</p>
+  </section>
+
+  <div class="filter-bar" id="filterBar"></div>
+  <p class="section-label" id="toolCount"></p>
+  <div class="grid" id="toolGrid"></div>
+
+  <footer>
+    <span>All Apps by MrPress</span>
+    <span id="footerCount"></span>
+    <span class="footer-copy">© <span id="year"></span> MrPress LLC. All rights reserved.</span>
+  </footer>
+
+  <script>
+  // ============================================================
+  //  TOOL LIST — Add a tool by pasting a block here.
+  //  Then upload the tool's HTML file to the /tools/ folder.
+  //
+  //  Template:
+  //  { name:"", description:"", icon:"", category:"", url:"tools/.html" },
+  // ============================================================
+
+  const TOOLS = [
+
+    // ── Business ─────────────────────────────────────────────
+    { name:"Invoice Generator", description:"Create a professional invoice or receipt in seconds. Print or save as PDF.", icon:"📄", category:"Business", url:"tools/invoice-generator.html" },
+    { name:"Business Calculators", description:"ROI, break-even point, and profit margin — three essential business calculators in one.", icon:"💼", category:"Business", url:"tools/business-calculators.html" },
+
+    // ── Calculator ───────────────────────────────────────────
+    { name:"Calculator", description:"A clean, fast basic calculator. Supports keyboard input.", icon:"🔢", category:"Calculator", url:"tools/basic-calculator.html" },
+    { name:"Scientific Calculator", description:"Full scientific calculator with trig, log, factorial, memory, and RAD/DEG mode.", icon:"🔬", category:"Calculator", url:"tools/scientific-calculator.html" },
+    { name:"BMI Calculator", description:"Calculate your Body Mass Index in metric or imperial with a visual scale.", icon:"⚖️", category:"Calculator", url:"tools/bmi-calculator.html" },
+    { name:"GPA Calculator", description:"Add courses, grades, and credit hours to calculate your GPA. Supports 4.0 and 5.0 scales.", icon:"🎓", category:"Calculator", url:"tools/gpa-calculator.html" },
+    { name:"Percentage Calculator", description:"Six common percentage calculations — X% of Y, change, increase, discount and more.", icon:"％", category:"Calculator", url:"tools/percentage-calculator.html" },
+    { name:"Tip Calculator", description:"Calculate tip and split the bill between any number of people.", icon:"🧾", category:"Calculator", url:"tools/tip-calculator.html" },
+    { name:"Final Grade Calculator", description:"Find out what score you need on your final exam to achieve your target grade.", icon:"📝", category:"Calculator", url:"tools/final-grade-calculator.html" },
+
+    // ── Design ───────────────────────────────────────────────
+    { name:"Color Picker", description:"Pick any color and get HEX, RGB, and HSL values instantly. Includes shades and tints.", icon:"🎨", category:"Design", url:"tools/color-picker.html" },
+
+    // ── Document ─────────────────────────────────────────────
+    { name:"Image to PDF", description:"Convert one or more images into a single PDF. Choose page size, fit mode, and margins.", icon:"🖼️", category:"Document", url:"tools/image-to-pdf.html" },
+    { name:"Merge / Split PDF", description:"Combine multiple PDFs into one file, or split a PDF into separate pages or ranges.", icon:"📎", category:"Document", url:"tools/merge-split-pdf.html" },
+    { name:"Save Website as PDF", description:"Open any webpage and save it as a PDF using your browser's built-in print dialog.", icon:"🌐", category:"Document", url:"tools/website-to-pdf.html" },
+    { name:"Slides to PDF", description:"Convert slide screenshots or images into a PDF, or extract PDF pages as images in a ZIP.", icon:"📑", category:"Document", url:"tools/slides-to-pdf.html" },
+    { name:"Watermark PDF", description:"Add a custom text watermark to every page of a PDF. Set opacity, angle, colour, and position.", icon:"💧", category:"Document", url:"tools/watermark-pdf.html" },
+
+    // ── Finance ──────────────────────────────────────────────
+    { name:"Currency Converter", description:"Live exchange rates for 160+ currencies with popular pair shortcuts.", icon:"💱", category:"Finance", url:"tools/currency-converter.html" },
+    { name:"Loan Calculator", description:"Calculate monthly payments, total interest, and a full amortization schedule.", icon:"🏦", category:"Finance", url:"tools/loan-calculator.html" },
+    { name:"Sales Tax Calculator", description:"Calculate sales tax for any US state with average combined state + local rates. Auto-detects your location.", icon:"🧾", category:"Finance", url:"tools/sales-tax.html" },
+
+    // ── Fun ──────────────────────────────────────────────────
+    { name:"Coin Flip", description:"Flip a coin. Tracks your heads and tails streak. Click or press Space.", icon:"🪙", category:"Fun", url:"tools/coin-flip.html" },
+    { name:"CPS Tests", description:"Test your reaction time, mouse click speed (CPS), and spacebar speed — three tests in one.", icon:"⚡", category:"Fun", url:"tools/speed-tests.html" },
+    { name:"Decision Maker", description:"Think of a yes/no question and let fate decide. Yes, No, or Maybe — with mode options.", icon:"🤔", category:"Fun", url:"tools/decision-maker.html" },
+    { name:"Dice Roller", description:"Roll any number of dice — D4, D6, D8, D10, D12, D20, or D100. Up to 12 dice at once.", icon:"🎲", category:"Fun", url:"tools/dice-roller.html" },
+    { name:"Name Wheel", description:"Spin a wheel to randomly pick a winner from your list of names.", icon:"🎡", category:"Fun", url:"tools/name-wheel.html" },
+    { name:"Typing Speed Test", description:"Measure your WPM and accuracy. 15, 30, 60, or 120 second tests with live stats.", icon:"⌨️", category:"Fun", url:"tools/typing-speed.html" },
+
+    // ── GIF ──────────────────────────────────────────────────
+    { name:"GIF Speed Changer", description:"Speed up or slow down any GIF. Preview and download instantly.", icon:"⚡", category:"GIF", url:"tools/gif-speed.html" },
+    { name:"GIF to ZIP", description:"Extract every frame from a GIF as PNG or JPG images, bundled into a ZIP file.", icon:"📦", category:"GIF", url:"tools/gif-to-zip.html" },
+
+    // ── Image ────────────────────────────────────────────────
+    { name:"Image Border", description:"Add a custom border around any image — choose size, colour, and corner radius.", icon:"🖼️", category:"Image", url:"tools/image-border.html" },
+    { name:"Image Converter", description:"Convert any image between JPG, PNG, GIF, BMP, TIFF, and WebP — right in your browser.", icon:"🖼️", category:"Image", url:"tools/image-converter.html" },
+    { name:"Image Cropper", description:"Drag to crop any image. Lock to an aspect ratio or enter exact pixel coordinates.", icon:"✂️", category:"Image", url:"tools/image-cropper.html" },
+    { name:"Image Grayscaler", description:"Convert images to grayscale, sepia, cool/warm tint, or invert. Adjust brightness and contrast.", icon:"⬛", category:"Image", url:"tools/image-grayscaler.html" },
+    { name:"Image Metadata Viewer", description:"View EXIF data, camera settings, GPS location, and file info embedded in any image.", icon:"🔍", category:"Image", url:"tools/image-metadata.html" },
+    { name:"Image Quality", description:"Compress images and adjust quality. Live before/after comparison with file size savings.", icon:"🗜️", category:"Image", url:"tools/image-quality.html" },
+    { name:"Image Rotator", description:"Rotate or flip any image by any angle. Download instantly.", icon:"🔄", category:"Image", url:"tools/image-rotator.html" },
+
+    // ── Math ─────────────────────────────────────────────────
+    { name:"Factor Calculator", description:"Find all factors, factor pairs, and prime factorization of any number. Also calculates GCF and LCM.", icon:"✖️", category:"Math", url:"tools/factor-calculator.html" },
+    { name:"Prime Number Checker", description:"Check if a number is prime, find nearby primes, and list all primes in any range.", icon:"🔢", category:"Math", url:"tools/prime-checker.html" },
+
+    // ── Media ────────────────────────────────────────────────
+    { name:"Volume Changer", description:"Upload any audio or video file, adjust the volume up to 300%, and download the result.", icon:"🔊", category:"Media", url:"tools/volume-changer.html" },
+
+    // ── Security ─────────────────────────────────────────────
+    { name:"Password Generator", description:"Generate strong, random passwords with custom length and character options.", icon:"🔒", category:"Security", url:"tools/password-generator.html" },
+    { name:"Password Strength Checker", description:"Analyse any password's strength, entropy, crack time estimates, and get specific tips to improve it.", icon:"🔐", category:"Security", url:"tools/password-strength.html" },
+
+    // ── Text ─────────────────────────────────────────────────
+    { name:"Extra Space Remover", description:"Clean up messy text — remove double spaces, blank lines, trim edges, fix tabs, and more.", icon:"␣", category:"Text", url:"tools/extra-space-remover.html" },
+    { name:"Humanizer", description:"Remove AI writing patterns — significance inflation, em dashes, filler phrases, vague attributions and more.", icon:"🧑", category:"Text", url:"tools/humanizer.html" },
+    { name:"Paraphraser", description:"Rewrite any text in a different tone — Standard, Formal, Casual, Concise, Creative and more. Powered by AI.", icon:"✍️", category:"Text", url:"tools/paraphraser.html" },
+    { name:"Text Case Converter", description:"Convert text to UPPER, lower, Title, camelCase, snake_case and more.", icon:"Aa", category:"Text", url:"tools/text-case-converter.html" },
+    { name:"Word Counter", description:"Count words, characters, sentences and reading time instantly.", icon:"📝", category:"Text", url:"tools/word-counter.html" },
+    { name:"Word Scrambler", description:"Scramble letters, words, or sentences in multiple modes. Great for puzzles and games.", icon:"🔀", category:"Text", url:"tools/word-scrambler.html" },
+
+    // ── Utility ──────────────────────────────────────────────
+    { name:"Digital Clock", description:"A clean, minimal digital clock. Hit fullscreen to hide everything and use it as a desk clock.", icon:"🕐", category:"Utility", url:"tools/digital-clock.html" },
+    { name:"Fake Name Generator", description:"Generate realistic fake identities with name, email, phone, address and job for testing.", icon:"🪪", category:"Utility", url:"tools/fake-name-generator.html" },
+    { name:"File Size Calculator", description:"Convert between bytes, KB, MB, GB and TB. Check real file sizes and calculate storage capacity.", icon:"💾", category:"Utility", url:"tools/file-size-calculator.html" },
+    { name:"Internet Speed Test", description:"Measure your download speed, upload speed, and ping — runs entirely in your browser.", icon:"📶", category:"Utility", url:"tools/speed-test.html" },
+    { name:"Morse Code", description:"Convert text to Morse code and back. Play it as audio with adjustable speed and pitch.", icon:"📡", category:"Utility", url:"tools/morse-code.html" },
+    { name:"Nickname Generator", description:"Generate cute, cool, funny, gamer, and short nicknames from any name or word.", icon:"😄", category:"Utility", url:"tools/nickname-generator.html" },
+    { name:"Number Sorter", description:"Paste a list of numbers and sort ascending or descending. Removes duplicates, shows sum, min, and max.", icon:"🔢", category:"Utility", url:"tools/number-sorter.html" },
+    { name:"QR Code Generator", description:"Turn any URL, text, email, or phone number into a downloadable QR code. Optional text or logo watermark.", icon:"📷", category:"Utility", url:"tools/qr-generator.html" },
+    { name:"Random Number Generator", description:"Generate random numbers from any range. Choose count, toggle no-repeats, view history.", icon:"🎲", category:"Utility", url:"tools/random-number.html" },
+    { name:"Time & World Clock", description:"Calculate the difference between two dates and times, or check the current time in cities worldwide.", icon:"🌍", category:"Utility", url:"tools/time-world-clock.html" },
+    { name:"Timer", description:"Countdown timer and stopwatch with lap tracking, presets, and looping alarm.", icon:"⏱️", category:"Utility", url:"tools/timer.html" },
+    { name:"Unit Converter", description:"Convert between length, weight, temperature, and volume units instantly.", icon:"📐", category:"Utility", url:"tools/unit-converter.html" },
+    { name:"Username Generator", description:"Generate unique usernames by style — mixed, gamer, professional, adjective+noun and more.", icon:"👤", category:"Utility", url:"tools/username-generator.html" },
+    { name:"Website Status Checker", description:"Check if a website is up or down, view response time, and see HTTP status codes.", icon:"🌐", category:"Utility", url:"tools/website-status.html" },
+    { name:"ZIP Tool", description:"Compress files into a ZIP archive or extract the contents of any ZIP — all in your browser.", icon:"📦", category:"Utility", url:"tools/zip-tool.html" },
+
+    { name:"Speed Changer", description:"Change the playback speed of any audio or video file from 0.25× to 4×. Download as WAV.", icon:"⏩", category:"Media", url:"tools/speed-changer.html" },
+    { name:"Media Splitter", description:"Upload audio or video, click the timeline to add split points, delete segments, and export.", icon:"✂️", category:"Media", url:"tools/media-splitter.html" },
+    { name:"Business Name Generator", description:"Generate creative business name ideas from a keyword or industry. Multiple styles to choose from.", icon:"🏢", category:"Business", url:"tools/business-name-generator.html" },
+    { name:"Word Frequency Counter", description:"See how often each word appears in any text. Filter stop words, export as CSV.", icon:"📊", category:"Text", url:"tools/word-frequency.html" },
+    { name:"Acronym Generator", description:"Create an acronym from any phrase, or reverse-engineer a meaning from a set of letters.", icon:"🔤", category:"Text", url:"tools/acronym-generator.html" },
+    { name:"To-Do List", description:"A clean, minimal to-do list. Tasks are saved in your browser automatically.", icon:"✅", category:"Utility", url:"tools/todo-list.html" },
+
+    { name:"Encryptor", description:"Encrypt any text with a password using AES-256-GCM. Decrypt it with the same password. Runs entirely in your browser.", icon:"🔒", category:"Security", url:"tools/encryptor.html" },
+    { name:"Exam Score Calculator", description:"Calculate your overall weighted grade from multiple assignments, or quickly convert points to a percentage.", icon:"📝", category:"Calculator", url:"tools/exam-score.html" },
+    { name:"Redirect Checker", description:"Enter a URL and trace its full redirect chain — every hop, status code, and final destination.", icon:"🔗", category:"Utility", url:"tools/redirect-checker.html" },
+    { name:"Random Facts", description:"Get a surprising, verified random fact. Choose from Science, History, Animals, Space, Food and more. Powered by AI.", icon:"🧠", category:"Fun", url:"tools/random-facts.html" },
+    { name:"Commission Calculator", description:"Calculate flat, tiered, or split commissions. See your take-home after tax and base salary.", icon:"💰", category:"Finance", url:"tools/commission-calc.html" },
+    { name:"Salary Calculator", description:"Convert between annual salary and hourly rate. See daily, weekly, monthly and bi-weekly breakdowns.", icon:"💵", category:"Finance", url:"tools/salary-calculator.html" },
+
+    { name:"Inflation Calculator", description:"See how the value of money changes over time. Calculate purchasing power, adjusted value, and cumulative inflation.", icon:"📈", category:"Finance", url:"tools/inflation-calc.html" },
+    { name:"Image Comparison Slider", description:"Upload two images and drag a slider to compare them side by side. Perfect for before/after.", icon:"🖼️", category:"Image", url:"tools/image-comparison.html" },
+    { name:"Text Summarizer", description:"Shorten or summarize any text. Choose from short summary, bullet points, one sentence, TL;DR and more. Powered by AI.", icon:"✂️", category:"Text", url:"tools/text-summarizer.html" },
+    { name:"CSV Cleaner", description:"Paste or upload a CSV and clean whitespace, empty rows, blank columns, duplicate headers and more.", icon:"🧹", category:"Utility", url:"tools/csv-cleaner.html" },
+    { name:"Debt Calculators", description:"Calculate debt payoff timelines and credit card interest costs with a full amortization schedule.", icon:"💳", category:"Finance", url:"tools/debt-calculators.html" },
+
+    { name:"Date Calculator", description:"Find the exact difference between two dates including business days, calculate your age, or count down to any event.", icon:"📅", category:"Utility", url:"tools/date-calculator.html" },
+    { name:"Overtime Calculator", description:"Enter your hourly rate and daily hours to calculate regular and overtime pay with full weekly breakdown.", icon:"⏰", category:"Finance", url:"tools/overtime-calc.html" },
+    { name:"Fantasy Name Generator", description:"Generate names for characters, places, and creatures — Human, Elf, Dwarf, Orc, Dragon, Wizard, Sci-Fi and more.", icon:"⚔️", category:"Fun", url:"tools/fantasy-name-generator.html" },
+    { name:"Whack-a-Mole", description:"Click the moles before they hide! Combo multipliers, bombs, and four difficulty levels.", icon:"🔨", category:"Games", url:"tools/whack-a-mole.html" },
+    { name:"Moving Button", description:"Click the button as many times as you can before it escapes. Four difficulty modes.", icon:"🎯", category:"Games", url:"tools/moving-button.html" },
+    { name:"Memory Game", description:"Flip cards to find matching pairs. Play vs a bot (Easy/Medium/Hard) or a friend. Three grid sizes.", icon:"🧠", category:"Games", url:"tools/memory-game.html" },
+
+    { name:"Tic Tac Toe", description:"Play against a bot (Easy / Medium / Hard / Impossible) or a friend. Full minimax AI on Impossible mode.", icon:"⭕", category:"Games", url:"tools/tic-tac-toe.html" },
+    { name:"2048", description:"Slide tiles to combine them and reach 2048. Arrow keys or swipe. Tracks your best score.", icon:"🔢", category:"Games", url:"tools/2048.html" },
+    { name:"Snake", description:"Eat the food, grow your snake, don't crash. Arrow keys or swipe. Four speed settings.", icon:"🐍", category:"Games", url:"tools/snake.html" },
+    { name:"Tug of War", description:"Click faster than the bot or a friend to drag the rope to your side. Bot has four difficulty levels.", icon:"🪢", category:"Games", url:"tools/tug-of-war.html" },
+
+    // ── ADD MORE TOOLS BELOW ──────────────────────────────────
+    { name:"Monopoly", description:"Classic property-trading board game. Play against bots with auctions, houses, hotels, and trades.", icon:"🎩", category:"Games", url:"tools/monopoly.html" },
+    { name:"Colonist", description:"Hex-island trading and building strategy game. Gather resources, build roads and settlements, and outplay the bots.", icon:"🏝️", category:"Games", url:"tools/colonist/index.html" },
+    { name:"Hues & Cues", description:"Give one-word clues and guess the hidden color on a giant color grid. Pass-and-play party game.", icon:"🌈", category:"Games", url:"tools/hues-and-cues.html" },
+    { name:"Flip 7 Scoreboard", description:"Keep score for Flip 7 card games. Tracks every round and every player on the race to 200.", icon:"🃏", category:"Games", url:"tools/flip7-scoreboard.html" },
+    { name:"Judgement Score Tracker", description:"Score tracker for the Judgement (Oh Hell) card game. Record bids and tricks each round with automatic scoring.", icon:"♠️", category:"Games", url:"tools/judgement-score-tracker.html" },
+    { name:"AI Task Organizer", description:"Task list that uses a local AI to organize and prioritize your to-dos. Requires Ollama running on your computer.", icon:"✅", category:"Utility", url:"tools/ai-task-organizer.html" },
+
+  ];
+
+  TOOLS.sort((a, b) => a.name.localeCompare(b.name));
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  const cats = ['all', ...[...new Set(TOOLS.map(t => t.category))].sort()];
+  const filterBar = document.getElementById('filterBar');
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn' + (cat === 'all' ? ' active' : '');
+    btn.dataset.cat = cat;
+    btn.textContent = cat === 'all' ? 'All' : cat;
+    filterBar.appendChild(btn);
+  });
+
+  let activeCat = 'all', searchQuery = '';
+
+  function renderGrid() {
+    const grid = document.getElementById('toolGrid');
+    const count = document.getElementById('toolCount');
+    const foot  = document.getElementById('footerCount');
+    const filtered = TOOLS.filter(t => {
+      const matchCat = activeCat === 'all' || t.category === activeCat;
+      const q = searchQuery.toLowerCase();
+      const matchSearch = !q || t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q) || t.category.toLowerCase().includes(q);
+      return matchCat && matchSearch;
+    });
+    count.textContent = filtered.length + ' tool' + (filtered.length !== 1 ? 's' : '');
+    foot.textContent  = TOOLS.length + ' tools total';
+    grid.innerHTML    = '';
+    if (!filtered.length) { grid.innerHTML = '<div class="empty">No tools found. Try a different search.</div>'; return; }
+    filtered.forEach((tool, i) => {
+      const a = document.createElement('a');
+      a.className = 'tool-card';
+      a.href = tool.url;
+      a.style.animationDelay = (i * 0.04) + 's';
+      a.innerHTML = `<div class="tool-icon">${tool.icon}</div><div class="tool-name">${tool.name}</div><div class="tool-desc">${tool.description}</div><span class="tool-tag">${tool.category}</span>`;
+      grid.appendChild(a);
+    });
+  }
+
+  filterBar.addEventListener('click', e => {
+    if (!e.target.matches('.filter-btn')) return;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    activeCat = e.target.dataset.cat;
+    renderGrid();
+  });
+
+  document.getElementById('search').addEventListener('input', e => {
+    searchQuery = e.target.value;
+    renderGrid();
+  });
+
+  renderGrid();
+  </script>
+
+</body>
+</html>

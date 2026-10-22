@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hues &amp; Cues</title>
+<style>
+  :root{
+    --bg: #14161c;
+    --panel: #1e212b;
+    --panel-2: #262a37;
+    --border: #333849;
+    --text: #eef0f5;
+    --text-dim: #9aa0b2;
+    --accent: #ffca3a;
+    --accent-2: #6a4c93;
+    --good: #52b69a;
+    --bad: #ff595e;
+    --radius: 14px;
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0;
+    background: radial-gradient(1200px 800px at 20% -10%, #23283a 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+  }
+  #app{
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px 20px 60px;
+  }
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  h1{
+    font-size: 26px;
+    margin:0;
+    letter-spacing: 0.5px;
+    background: linear-gradient(90deg, #ff595e, #ffca3a, #8ac926, #1982c4, #6a4c93);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 800;
+  }
+  header .tagline{
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 2px;
+  }
+  button{
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #241c00;
+    transition: transform .08s ease, opacity .15s ease, box-shadow .15s ease;
+  }
+  button:hover{ transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+  button:active{ transform: translateY(0); }
+  button:disabled{ opacity: .4; cursor: not-allowed; transform:none; box-shadow:none; }
+  button.secondary{ background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  button.danger{ background: var(--bad); color: #2a0002; }
+  button.ghost{ background: transparent; color: var(--text-dim); border: 1px solid var(--border); padding: 6px 10px; font-size: 12px; }
+
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+
+  /* ---------- Setup ---------- */
+  #setup-screen{ max-width: 560px; margin: 40px auto; }
+  #setup-screen h2{ margin-top:0; }
+  .player-row{
+    display:flex; gap:8px; align-items:center; margin-bottom: 8px;
+  }
+  .player-row input[type=text]{
+    flex:1;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .player-row .swatch{
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid #fff3; flex-shrink:0;
+  }
+  .player-row button{ padding: 6px 10px; font-size: 12px; }
+  .setup-actions{ display:flex; gap:10px; margin-top: 16px; flex-wrap:wrap; }
+  .field-row{ display:flex; align-items:center; gap:10px; margin: 14px 0; }
+  .field-row label{ color: var(--text-dim); font-size: 13px; }
+  .field-row input[type=number]{
+    width: 70px; background: var(--panel-2); border:1px solid var(--border);
+    border-radius: 8px; padding: 7px 10px; color: var(--text);
+  }
+  #setup-error{ color: var(--bad); font-size: 13px; min-height: 18px; margin-top: 6px; }
+  .rules-toggle{ font-size: 13px; color: var(--text-dim); cursor:pointer; text-decoration: underline; margin-top: 10px; display:inline-block; }
+  #rules-body{ display:none; font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+  #rules-body.open{ display:block; }
+
+  /* ---------- Game layout ---------- */
+  #game-screen{ display: none; grid-template-columns: 1fr 320px; gap: 20px; align-items:start; }
+  #game-screen.active{ display:grid; }
+  @media (max-width: 980px){
+    #game-screen.active{ grid-template-columns: 1fr; }
+  }
+
+  #board-wrap{
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  #board{
+    display: grid;
+    grid-template-columns: repeat(24, minmax(26px, 1fr));
+    gap: 2px;
+    width: 100%;
+    min-width: 700px;
+    aspect-ratio: 24 / 20;
+  }
+  .cell{
+    position: relative;
+    border-radius: 4px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor: default;
+    overflow: visible;
+  }
+  .cell.clickable{ cursor: pointer; }
+  .cell.clickable:hover{ outline: 2px solid #fff9; outline-offset: -2px; z-index: 3; }
+  .cell .num{
+    position:absolute;
+    top: 1px; left: 2px;
+    font-size: 7px;
+    font-weight: 700;
+    pointer-events:none;
+    opacity: .75;
+  }
+  .cell .pins{
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:center;
+    gap: 1px; width:100%; height:100%; padding: 8px 1px 1px;
+  }
+  .pin{
+    width: 60%; max-width:16px; aspect-ratio:1;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,.85);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 8px; font-weight: 800; color: #fff;
+    text-shadow: 0 1px 1px rgba(0,0,0,.6);
+    box-shadow: 0 1px 3px rgba(0,0,0,.5);
+    z-index: 4;
+  }
+  .cell.target-cell{
+    z-index: 5;
+    box-shadow: 0 0 0 3px var(--accent), 0 0 14px 3px rgba(255,202,58,.9);
+    animation: pulse 1.1s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ box-shadow: 0 0 0 2px var(--accent), 0 0 10px 2px rgba(255,202,58,.7); }
+    50%{ box-shadow: 0 0 0 4px var(--accent), 0 0 18px 6px rgba(255,202,58,1); }
+  }
+  .cell.target-cell::after{
+    content: "★";
+    position:absolute;
+    color: #241c00;
+    background: var(--accent);
+    border-radius: 50%;
+    width: 60%; max-width:18px; aspect-ratio:1;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 10px;
+    z-index: 6;
+    box-shadow: 0 1px 4px rgba(0,0,0,.5);
+  }
+
+  /* ---------- Sidebar ---------- */
+  #sidebar{ display:flex; flex-direction:column; gap: 16px; }
+  #scoreboard h3{ margin: 0 0 10px; font-size: 14px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .06em; }
+  .score-row{
+    display:flex; align-items:center; gap:10px;
+    padding: 8px 10px; border-radius: 10px; margin-bottom: 4px;
+    background: var(--panel-2);
+  }
+  .score-row.is-cluegiver{ outline: 1px solid var(--accent); }
+  .score-row .marker{
+    width: 22px; height:22px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 10px; font-weight:800; color:#fff;
+    border: 1.5px solid rgba(255,255,255,.85);
+  }
+  .score-row .name{ flex:1; font-size: 14px; font-weight:600; }
+  .score-row .crown{ font-size: 13px; }
+  .score-row .pts{ font-size: 16px; font-weight:800; color: var(--accent); min-width: 26px; text-align:right; }
+
+  #phase-panel{ display:flex; flex-direction:column; gap: 12px; }
+  #phase-panel h3{ margin:0; font-size: 15px; }
+  #phase-panel p{ margin:0; font-size: 13px; color: var(--text-dim); line-height:1.5; }
+  .clue-word-display{
+    font-size: 26px; font-weight: 800; text-align:center;
+    padding: 10px; background: var(--panel-2); border-radius: 10px;
+    border: 1px dashed var(--border);
+  }
+  #clue-input{
+    width:100%; background: var(--panel-2); border:1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 15px;
+  }
+  .target-reveal{
+    display:flex; align-items:center; gap: 14px;
+    background: var(--panel-2); border-radius: 10px; padding: 12px;
+    border: 1px solid var(--border);
+  }
+  .target-reveal .big-swatch{
+    width: 54px; height:54px; border-radius: 10px; flex-shrink:0;
+    border: 2px solid #fff3;
+  }
+  .target-reveal .num{ font-size: 22px; font-weight:800; }
+  .guesser-chip{
+    display:flex; align-items:center; gap:8px;
+    padding: 8px 10px; border-radius: 10px; margin-bottom:6px;
+    background: var(--panel-2); border: 1.5px solid transparent; cursor:pointer;
+  }
+  .guesser-chip.active{ border-color: var(--accent); }
+  .guesser-chip.done{ opacity: .55; }
+  .guesser-chip .marker{
+    width:20px; height:20px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:800; color:#fff; border: 1.5px solid rgba(255,255,255,.85);
+  }
+  .guesser-chip .name{ flex:1; font-size:13px; font-weight:600; }
+  .guesser-chip .check{ color: var(--good); font-weight:800; }
+  #results-table{ width:100%; border-collapse: collapse; font-size: 13px; }
+  #results-table th, #results-table td{ text-align:left; padding: 6px 4px; border-bottom: 1px solid var(--border); }
+  #results-table th{ color: var(--text-dim); font-weight:600; font-size:11px; text-transform:uppercase; }
+  .pts-badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width: 22px; padding: 2px 6px; border-radius: 20px; font-weight:800; font-size:12px;
+  }
+  .pts-4{ background:#52b69a33; color:#7ee0c2; }
+  .pts-3{ background:#8ac92633; color:#c3ea7c; }
+  .pts-2{ background:#ffca3a33; color:#ffdb7a; }
+  .pts-1{ background:#ff924c33; color:#ffb684; }
+  .pts-0{ background:#ff595e33; color:#ff9b9e; }
+
+  #winner-banner{
+    text-align:center; padding: 30px 20px;
+  }
+  #winner-banner .trophy{ font-size: 54px; }
+  #winner-banner h2{
+    font-size: 30px; margin: 6px 0 4px;
+    background: linear-gradient(90deg, #ffca3a, #ff924c);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .footer-actions{ display:flex; gap:10px; margin-top: 8px; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <h1>Hues &amp; Cues</h1>
+      <div class="tagline">A digital, pass-and-play board for the color-guessing party game</div>
+    </div>
+    <div id="header-actions"></div>
+  </header>
+
+  <div id="setup-screen" class="card">
+    <h2>Start a Game</h2>
+    <div id="player-rows"></div>
+    <button id="add-player-btn" class="secondary" type="button">+ Add Player</button>
+
+    <div class="field-row">
+      <label for="win-score-input">Play to</label>
+      <input type="number" id="win-score-input" value="16" min="4" max="60" step="1">
+      <label for="win-score-input">points</label>
+    </div>
+
+    <div id="setup-error"></div>
+    <div class="setup-actions">
+      <button id="start-game-btn" type="button">Start Game</button>
+    </div>
+
+    <span class="rules-toggle" id="rules-toggle">How does this work?</span>
+    <div id="rules-body">
+      Each round one player is the <strong>Cue Card holder</strong>. Only they get to see the secret
+      target color on the board. They think of <strong>one clue word</strong> that describes it
+      (e.g. "Ocean", "Rust", "Lemon") and say it out loud.<br><br>
+      Everyone else places a guess peg on the numbered space they think matches that word.
+      When everyone has guessed, the target is revealed. Guessers score points based on how close
+      their peg is: <strong>4</strong> for an exact hit, <strong>3 / 2 / 1</strong> for each ring
+      further out, <strong>0</strong> if too far.<br><br>
+      The Cue Card holder scores <strong>0</strong> if either everyone scored or nobody scored —
+      otherwise they score the same as the highest-scoring guesser (rewarding a clue that was
+      good but not too easy). First to reach the target score wins.<br><br>
+      This is a hotseat game — pass the device around, and look away from the screen when it's not
+      your turn to see the target!
+    </div>
+  </div>
+
+  <div id="game-screen">
+    <div id="board-card" class="card">
+      <div id="board-wrap">
+        <div id="board"></div>
+      </div>
+    </div>
+
+    <div id="sidebar">
+      <div id="scoreboard" class="card"></div>
+      <div id="phase-panel" class="card"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const COLS = 24, ROWS = 20, TOTAL = COLS*ROWS;
+  const STORAGE_KEY = "huesAndCuesState_v1";
+  const MARKER_COLORS = ["#ff595e","#1982c4","#6a4c93","#ffca3a","#8ac926","#ff924c","#52b69a","#e0479e","#4361ee","#f15bb5","#43aa8b","#f3722c"];
+
+  // ---------- Board data ----------
+  function buildBoard(){
+    const cells = [];
+    for(let row=0; row<ROWS; row++){
+      for(let col=0; col<COLS; col++){
+        const num = row*COLS + col + 1;
+        let hue, sat, light;
+        if(col === 0){
+          hue = 0; sat = 0;
+          light = Math.round(95 - row*(80/(ROWS-1)));
+        } else {
+          hue = Math.round(((col-1) * 360) / (COLS-1));
+          sat = 72;
+          light = Math.round(92 - row*(78/(ROWS-1)));
+        }
+        cells.push({ num, row, col, hue, sat, light });
+      }
+    }
+    return cells;
+  }
+  const BOARD = buildBoard();
+  function cellByNum(num){ return BOARD[num-1]; }
+  function cssColor(c){ return `hsl(${c.hue} ${c.sat}% ${c.light}%)`; }
+  function textColor(c){ return c.light > 55 ? "rgba(0,0,0,.6)" : "rgba(255,255,255,.75)"; }
+
+  // ---------- State ----------
+  let state = null;
+
+  function freshPlayers(names){
+    return names.map((name, i) => ({ name, score: 0, color: MARKER_COLORS[i % MARKER_COLORS.length] }));
+  }
+
+  function newGame(names, winScore){
+    state = {
+      phase: "reveal-gate",
+      players: freshPlayers(names),
+      clueGiverIndex: 0,
+      round: 1,
+      winScore: winScore,
+      target: pickTarget(),
+      clue: "",
+      guesses: {},
+      activeGuesser: null,
+      lastRoundResults: null,
+      winnerIndex: null
+    };
+    save();
+    render();
+  }
+
+  function pickTarget(){
+    return 1 + Math.floor(Math.random() * TOTAL);
+  }
+
+  function save(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  }
+  function clearSave(){
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  }
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return null;
+      return JSON.parse(raw);
+    }catch(e){ return null; }
+  }
+
+  function markerInitial(name){
+    const c = (name||"?").trim().charAt(0).toUpperCase();
+    return c || "?";
+  }
+
+  // ---------- Scoring ----------
+  function distancePoints(dist){
+    if(dist === 0) return 4;
+    if(dist === 1) return 3;
+    if(dist === 2) return 2;
+    if(dist === 3) return 1;
+    return 0;
+  }
+  function chebyshev(numA, numB){
+    const a = cellByNum(numA), b = cellByNum(numB);
+    return Math.max(Math.abs(a.col-b.col), Math.abs(a.row-b.row));
+  }
+
+  function resolveRound(){
+    const results = [];
+    state.players.forEach((p, idx) => {
+      if(idx === state.clueGiverIndex) return;
+      const guess = state.guesses[idx];
+      const dist = chebyshev(guess, state.target);
+      const pts = distancePoints(dist);
+      results.push({ idx, name: p.name, guess, dist, pts });
+      p.score += pts;
+    });
+    const allZero = results.every(r => r.pts === 0);
+    const allScored = results.every(r => r.pts > 0);
+    let cluePts = 0;
+    if(results.length > 0 && !allZero && !allScored){
+      cluePts = Math.max(...results.map(r => r.pts));
+    }
+    state.players[state.clueGiverIndex].score += cluePts;
+    state.lastRoundResults = { results, cluePts, target: state.target, clueGiverIndex: state.clueGiverIndex };
+
+    const maxScore = Math.max(...state.players.map(p => p.score));
+    if(maxScore >= state.winScore){
+      state.winnerIndex = state.players.reduce((best, p, i, arr) => p.score > arr[best].score ? i : best, 0);
+      state.phase = "gameover";
+    } else {
+      state.phase = "round-result";
+    }
+    save();
+    render();
+  }
+
+  function nextRound(){
+    state.round += 1;
+    state.clueGiverIndex = (state.clueGiverIndex + 1) % state.players.length;
+    state.target = pickTarget();
+    state.clue = "";
+    state.guesses = {};
+    state.activeGuesser = firstUnguessedIndex();
+    state.lastRoundResults = null;
+    state.phase = "reveal-gate";
+    save();
+    render();
+  }
+
+  function firstUnguessedIndex(){
+    for(let i=0;i<state.players.length;i++){
+      if(i === state.clueGiverIndex) continue;
+      if(state.guesses[i] === undefined) return i;
+    }
+    return null;
+  }
+
+  // ---------- Rendering ----------
+  const $ = sel => document.querySelector(sel);
+
+  function render(){
+    if(!state){
+      $("#setup-screen").style.display = "block";
+      $("#game-screen").classList.remove("active");
+      renderHeaderActions();
+      return;
+    }
+    $("#setup-screen").style.display = "none";
+    $("#game-screen").classList.add("active");
+    renderHeaderActions();
+    renderBoard();
+    renderScoreboard();
+    renderPhasePanel();
+  }
+
+  function renderHeaderActions(){
+    const el = $("#header-actions");
+    el.innerHTML = "";
+    if(state){
+      const btn = document.createElement("button");
+      btn.className = "ghost";
+      btn.textContent = "New Game";
+      btn.onclick = () => {
+        if(confirm("End the current game and return to setup?")){
+          clearSave();
+          state = null;
+          render();
+        }
+      };
+      el.appendChild(btn);
+    }
+  }
+
+  function renderBoard(){
+    const boardEl = $("#board");
+    boardEl.innerHTML = "";
+    const clueGiverCanSee = state.phase === "clue-input";
+    const isReveal = state.phase === "round-result" || state.phase === "gameover";
+    const isGuessing = state.phase === "guessing";
+
+    for(let num=1; num<=TOTAL; num++){
+      const c = cellByNum(num);
+      const div = document.createElement("div");
+      div.className = "cell";
+      div.style.background = cssColor(c);
+      div.title = "#" + num;
+
+      const numLabel = document.createElement("div");
+      numLabel.className = "num";
+      numLabel.style.color = textColor(c);
+      numLabel.textContent = num;
+      div.appendChild(numLabel);
+
+      const pins = document.createElement("div");
+      pins.className = "pins";
+      div.appendChild(pins);
+
+      // show placed guesses during guessing/reveal phases
+      if(isGuessing || isReveal){
+        state.players.forEach((p, idx) => {
+          if(idx === state.clueGiverIndex) return;
+          if(state.guesses[idx] === num){
+            const pin = document.createElement("div");
+            pin.className = "pin";
+            pin.style.background = p.color;
+            pin.textContent = markerInitial(p.name);
+            pin.title = p.name;
+            pins.appendChild(pin);
+          }
+        });
+      }
+
+      // target highlight
+      if((clueGiverCanSee || isReveal) && num === state.target){
+        div.classList.add("target-cell");
+      }
+
+      // click handling
+      if(isGuessing && state.activeGuesser !== null){
+        div.classList.add("clickable");
+        div.onclick = () => placeGuess(state.activeGuesser, num);
+      }
+
+      boardEl.appendChild(div);
+    }
+  }
+
+  function placeGuess(playerIdx, num){
+    state.guesses[playerIdx] = num;
+    state.activeGuesser = firstUnguessedIndex();
+    save();
+    render();
+  }
+
+  function renderScoreboard(){
+    const el = $("#scoreboard");
+    el.innerHTML = "<h3>Scoreboard &middot; Round " + state.round + "</h3>";
+    state.players.forEach((p, idx) => {
+      const row = document.createElement("div");
+      row.className = "score-row" + (idx === state.clueGiverIndex ? " is-cluegiver" : "");
+      row.innerHTML = `
+        <div class="marker" style="background:${p.color}">${markerInitial(p.name)}</div>
+        <div class="name">${escapeHtml(p.name)}</div>
+        ${idx === state.clueGiverIndex ? '<span class="crown" title="Cue Card holder">🎴</span>' : ''}
+        <div class="pts">${p.score}</div>
+      `;
+      el.appendChild(row);
+    });
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  function renderPhasePanel(){
+    const el = $("#phase-panel");
+    el.innerHTML = "";
+    const clueGiver = state.players[state.clueGiverIndex];
+
+    if(state.phase === "reveal-gate"){
+      el.innerHTML = `
+        <h3>Round ${state.round}</h3>
+        <p><strong>${escapeHtml(clueGiver.name)}</strong> is the Cue Card holder this round.</p>
+        <p>Pass the device to <strong>${escapeHtml(clueGiver.name)}</strong>. Everyone else, look away!
+        When ready, tap below to reveal the secret color.</p>
+        <button id="reveal-btn">Reveal My Color</button>
+      `;
+      $("#reveal-btn").onclick = () => {
+        state.phase = "clue-input";
+        save();
+        render();
+      };
+      return;
+    }
+
+    if(state.phase === "clue-input"){
+      const c = cellByNum(state.target);
+      el.innerHTML = `
+        <h3>Your Secret Color</h3>
+        <div class="target-reveal">
+          <div class="big-swatch" style="background:${cssColor(c)}"></div>
+          <div class="num">#${state.target}</div>
+        </div>
+        <p>Think of <strong>one clue word</strong> that describes this color, then type it below
+        and lock it in. The board will hide the color again once you continue.</p>
+        <input type="text" id="clue-input" placeholder="e.g. Lemon, Rust, Ocean..." maxlength="40" autocomplete="off">
+        <button id="lock-clue-btn">Lock In Clue &amp; Hide</button>
+      `;
+      const input = $("#clue-input");
+      input.focus();
+      input.addEventListener("keydown", e => { if(e.key === "Enter") lockClue(); });
+      $("#lock-clue-btn").onclick = lockClue;
+      function lockClue(){
+        const val = input.value.trim();
+        if(!val){ input.focus(); return; }
+        state.clue = val;
+        state.guesses = {};
+        state.activeGuesser = firstUnguessedIndex();
+        state.phase = "guessing";
+        save();
+        render();
+      }
+      return;
+    }
+
+    if(state.phase === "guessing"){
+      el.innerHTML = `<h3>The Clue</h3><div class="clue-word-display">"${escapeHtml(state.clue)}"</div>
+        <p>Tap a player below, then tap the space on the board that best matches the clue.</p>
+        <div id="guesser-list"></div>
+        <button id="reveal-answer-btn">Reveal Answer</button>`;
+      const list = $("#guesser-list");
+      state.players.forEach((p, idx) => {
+        if(idx === state.clueGiverIndex) return;
+        const done = state.guesses[idx] !== undefined;
+        const chip = document.createElement("div");
+        chip.className = "guesser-chip" + (state.activeGuesser === idx ? " active" : "") + (done ? " done" : "");
+        chip.innerHTML = `
+          <div class="marker" style="background:${p.color}">${markerInitial(p.name)}</div>
+          <div class="name">${escapeHtml(p.name)}${done ? " &mdash; #" + state.guesses[idx] : ""}</div>
+          ${done ? '<span class="check">✓</span>' : ''}
+        `;
+        chip.onclick = () => { state.activeGuesser = idx; save(); render(); };
+        list.appendChild(chip);
+      });
+      const allGuessed = state.players.every((p, idx) => idx === state.clueGiverIndex || state.guesses[idx] !== undefined);
+      const revealBtn = $("#reveal-answer-btn");
+      revealBtn.disabled = !allGuessed;
+      revealBtn.onclick = resolveRound;
+      return;
+    }
+
+    if(state.phase === "round-result"){
+      const r = state.lastRoundResults;
+      const c = cellByNum(r.target);
+      let rows = r.results.map(res => `
+        <tr>
+          <td>${escapeHtml(state.players[res.idx].name)}</td>
+          <td>#${res.guess}</td>
+          <td>${res.dist}</td>
+          <td><span class="pts-badge pts-${res.pts}">+${res.pts}</span></td>
+        </tr>`).join("");
+      el.innerHTML = `
+        <h3>Round ${state.round} Result</h3>
+        <div class="target-reveal">
+          <div class="big-swatch" style="background:${cssColor(c)}"></div>
+          <div>
+            <div class="num">#${r.target}</div>
+            <div style="color:var(--text-dim);font-size:13px">Clue: "${escapeHtml(state.clue)}"</div>
+          </div>
+        </div>
+        <table id="results-table">
+          <thead><tr><th>Player</th><th>Guess</th><th>Dist</th><th>Pts</th></tr></thead>
+          <tbody>${rows}
+            <tr>
+              <td>${escapeHtml(state.players[r.clueGiverIndex].name)} <span style="color:var(--text-dim)">(clue giver)</span></td>
+              <td colspan="2" style="color:var(--text-dim)">bonus</td>
+              <td><span class="pts-badge pts-${Math.min(r.cluePts,4)}">+${r.cluePts}</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <button id="next-round-btn">Next Round</button>
+      `;
+      $("#next-round-btn").onclick = nextRound;
+      return;
+    }
+
+    if(state.phase === "gameover"){
+      const winner = state.players[state.winnerIndex];
+      const sorted = [...state.players].sort((a,b) => b.score - a.score);
+      let rows = sorted.map(p => `<div class="score-row"><div class="marker" style="background:${p.color}">${markerInitial(p.name)}</div><div class="name">${escapeHtml(p.name)}</div><div class="pts">${p.score}</div></div>`).join("");
+      el.innerHTML = `
+        <div id="winner-banner">
+          <div class="trophy">🏆</div>
+          <h2>${escapeHtml(winner.name)} wins!</h2>
+          <p>Final scores</p>
+        </div>
+        ${rows}
+        <div class="footer-actions">
+          <button id="rematch-btn">Rematch (Reset Scores)</button>
+          <button id="new-players-btn" class="secondary">New Game</button>
+        </div>
+      `;
+      $("#rematch-btn").onclick = () => {
+        state.players.forEach(p => p.score = 0);
+        state.round = 1;
+        state.clueGiverIndex = 0;
+        state.target = pickTarget();
+        state.clue = "";
+        state.guesses = {};
+        state.activeGuesser = null;
+        state.lastRoundResults = null;
+        state.winnerIndex = null;
+        state.phase = "reveal-gate";
+        save();
+        render();
+      };
+      $("#new-players-btn").onclick = () => {
+        clearSave();
+        state = null;
+        render();
+      };
+      return;
+    }
+  }
+
+  // ---------- Setup screen ----------
+  let setupPlayerCount = 0;
+  function addPlayerRow(name){
+    setupPlayerCount++;
+    const rows = $("#player-rows");
+    const row = document.createElement("div");
+    row.className = "player-row";
+    const color = MARKER_COLORS[(rows.children.length) % MARKER_COLORS.length];
+    row.innerHTML = `
+      <div class="swatch" style="background:${color}"></div>
+      <input type="text" placeholder="Player name" maxlength="20" value="${name ? escapeHtml(name) : ""}">
+      <button type="button" class="ghost remove-player-btn">Remove</button>
+    `;
+    row.querySelector(".remove-player-btn").onclick = () => {
+      row.remove();
+      recolorSwatches();
+    };
+    rows.appendChild(row);
+  }
+  function recolorSwatches(){
+    const rows = document.querySelectorAll("#player-rows .player-row");
+    rows.forEach((row, i) => {
+      row.querySelector(".swatch").style.background = MARKER_COLORS[i % MARKER_COLORS.length];
+    });
+  }
+
+  function initSetupScreen(defaultNames){
+    $("#player-rows").innerHTML = "";
+    setupPlayerCount = 0;
+    (defaultNames && defaultNames.length ? defaultNames : ["", "", ""]).forEach(n => addPlayerRow(n));
+  }
+
+  $("#add-player-btn").addEventListener("click", () => addPlayerRow(""));
+
+  $("#start-game-btn").addEventListener("click", () => {
+    const inputs = document.querySelectorAll("#player-rows .player-row input[type=text]");
+    const names = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
+    const errEl = $("#setup-error");
+    if(names.length < 2){
+      errEl.textContent = "Add at least 2 players.";
+      return;
+    }
+    if(new Set(names.map(n => n.toLowerCase())).size !== names.length){
+      errEl.textContent = "Player names must be unique.";
+      return;
+    }
+    const winScore = Math.max(4, parseInt($("#win-score-input").value, 10) || 16);
+    errEl.textContent = "";
+    newGame(names, winScore);
+  });
+
+  $("#rules-toggle").addEventListener("click", () => {
+    $("#rules-body").classList.toggle("open");
+  });
+
+  // ---------- Boot ----------
+  const saved = load();
+  if(saved && saved.players && saved.players.length){
+    state = saved;
+  }
+  initSetupScreen(saved ? saved.players.map(p => p.name) : null);
+  render();
+})();
+</script>
+</body>
+</html>
